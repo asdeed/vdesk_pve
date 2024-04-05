@@ -71,7 +71,7 @@ yes | pacman -Sy archlinux-keyring && yes | pacman -Suy &>/dev/null
 msg_ok "Updated Container OS"
 
 msg_info "Updating multilib repo"
-cat << EOF | tee -a /etc/pacman.d/mirrorlist
+cat << EOF | tee -a /etc/pacman.conf
 [multilib]
 Include = /etc/pacman.d/mirrorlist
 EOF
