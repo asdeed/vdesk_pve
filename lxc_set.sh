@@ -254,9 +254,11 @@ cat <<EOF >> $LXC_CONFIG
 lxc.cgroup2.devices.allow: c 226:0 rwm
 lxc.cgroup2.devices.allow: c 226:128 rwm
 lxc.cgroup2.devices.allow: c 29:0 rwm
+lxc.cgroup2.devices.allow: c 235:0 rwm
 lxc.mount.entry: /dev/fb0 dev/fb0 none bind,optional,create=file
-lxc.mount.entry: /dev/dri/card0 dev/dri/card0 none bind,optional,create=dir
+lxc.mount.entry: /dev/dri/card0 dev/dri/card0 none bind,optional,create=file
 lxc.mount.entry: /dev/dri/renderD128 dev/renderD128 none bind,optional,create=file
+lxc.mount.entry: /dev/kfd dev/kfd none bind,optional,create=file
 # tty 7 - default for x
 lxc.cgroup2.devices.allow: c 4:7 rwm
 lxc.mount.entry: /dev/tty7 dev/tty7 none bind,optional,create=file
