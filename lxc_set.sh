@@ -2,11 +2,11 @@
 
 echo -e "Loading..."
 APP="vdesk"
-var_disk="8"
-var_cpu="2"
-var_ram="2048"
-var_os="ubuntu"
-var_version="22.04"
+var_disk="35"
+var_cpu="4"
+var_ram="4048"
+var_os="archlinux"
+var_version="base"
 NSAPP=$(echo ${APP,,} | tr -d ' ')
 var_install="${NSAPP}-install"
 NEXTID=$(pvesh get /cluster/nextid)
@@ -233,7 +233,7 @@ export PCT_OPTIONS="
   -unprivileged $CT_TYPE
   $PW
 "
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/tteck/Proxmox/main/ct/create_lxc.sh)" || exit
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/asdeed/vdesk_pve/main/create_lxc.sh)" || exit
 
 msg_info "Pre-starting LXC Container"
 pct start $CTID
@@ -251,21 +251,18 @@ msg_ok "Stopped LXC Container"
 
 LXC_CONFIG=/etc/pve/lxc/${CTID}.conf
 cat <<EOF >> $LXC_CONFIG
-lxc.cgroup2.devices.allow: c 226:0 rwm
+lxc.cgroup2.devices.allow: c 226:1 rwm
 lxc.cgroup2.devices.allow: c 226:128 rwm
-lxc.cgroup2.devices.allow: c 29:0 rwm
-lxc.cgroup2.devices.allow: c 235:0 rwm
-lxc.mount.entry: /dev/fb0 dev/fb0 none bind,optional,create=file
-lxc.mount.entry: /dev/dri/card0 dev/dri/card0 none bind,optional,create=file
+lxc.mount.entry: /dev/dri/card1 dev/dri/card1 none bind,optional,create=file
 lxc.mount.entry: /dev/dri/renderD128 dev/renderD128 none bind,optional,create=file
+lxc.cgroup2.devices.allow: c 29:1 rwm
+lxc.mount.entry: /dev/fb1 dev/fb1 none bind,optional,create=file
+lxc.cgroup2.devices.allow: c 235:0 rwm
 lxc.mount.entry: /dev/kfd dev/kfd none bind,optional,create=file
-# tty 7 - default for x
 lxc.cgroup2.devices.allow: c 4:7 rwm
 lxc.mount.entry: /dev/tty7 dev/tty7 none bind,optional,create=file
-# all input devices
 lxc.cgroup2.devices.allow: c 13:* rwm
 lxc.mount.entry: /dev/input dev/input none bind,optional,create=dir
-# sound 
 lxc.cgroup2.devices.allow: c 116:* rwm
 lxc.mount.entry: /dev/snd dev/snd none bind,optional,create=dir
 EOF
@@ -274,7 +271,7 @@ if [ "$CT_TYPE" == "1" ]; then
 lxc.idmap: u 0 100000 65536
 EOF
     #TODO internalize code to generate mapping instad of using external python script
-    LXC_SUB_CONF=$(python3 -c "$(wget -qLO - https://raw.githubusercontent.com/ddimick/proxmox-lxc-idmapper/master/run.py)" \
+    LXC_SUB_CONF=$(python3 -c "$(wget -qLO - https://raw.githubusercontent.com/asdeed/vdesk_pve/main/run.py)" \
       ${VIDEO_GID}=$(getent group video | cut -d: -f3) ${RENDER_GID}=$(getent group render | cut -d: -f3) ${TTY_GID}=$(getent group tty | cut -d: -f3) ${INPUT_GID}=$(getent group input | cut -d: -f3) ${AUDIO_GID}=$(getent group audio | cut -d: -f3)) 
     echo "$LXC_SUB_CONF" | grep 'lxc.idmap: g ' >> $LXC_CONFIG
     # on host add rights to map gids but only if they are not already in the file
@@ -306,9 +303,6 @@ msg_info "Starting LXC Container"
 pct start $CTID
 msg_ok "Started LXC Container"
 
-#pct push $CTID vdub-install.sh /tmp/vdub-install.sh
-#lxc-attach -n $CTID -- chmod +x /tmp/vdub-install.sh && bash ./vdub-install.sh || exit
-#lxc-attach -n $CTID -- bash -c "$(wget -qLO - http://192.168.2.6/vdesk/vdub-install.sh)" || exit
 lxc-attach -n $CTID -- bash -c "$(wget -qLO - https://raw.githubusercontent.com/asdeed/vdesk_pve/main/$var_install.sh)" || exit
 IP=$(pct exec $CTID ip a s dev eth0 | sed -n '/inet / s/\// /p' | awk '{print $2}')
 pct set $CTID -description "# ${APP} LXC"

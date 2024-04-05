@@ -65,64 +65,71 @@ RESOLVEDIP=$(nslookup "github.com" | awk -F':' '/^Address: / { matched = 1 } mat
 if [[ -z "$RESOLVEDIP" ]]; then msg_error "DNS Lookup Failure";  else msg_ok "DNS Resolved github.com to $RESOLVEDIP";  fi;
 
 msg_info "Updating Container OS"
-apt-get update &>/dev/null
-apt-get -y upgrade &>/dev/null
+pacman-key --init && pacman-key --populate archlinux &>/dev/null
+yes | pacman -Sy archlinux-keyring && yes | pacman -Suy &>/dev/null
 msg_ok "Updated Container OS"
 
+msg_info "Updating multilib repo"
+cat << EOF | tee -a /etc/pacman.d/mirrorlist
+[multilib]
+Include = /etc/pacman.d/mirrorlist
+EOF
+msg_info "Updated multilib repo"
+
 msg_info "Installing Dependencies"
-apt-get install -y curl &>/dev/null
-apt-get install -y sudo &>/dev/null
-apt-get install -y gnupg &>/dev/null
+yes | pacman -Syu &>/dev/null
+yes | pacman -S git vim nvtop htop &>/dev/null
 msg_ok "Installed Dependencies"
 
 msg_info "Setting Up Hardware Acceleration"  
-apt-get -y install \
-    va-driver-all \
-    ocl-icd-libopencl1 &>/dev/null 
-set +e
-alias die=''
-apt-get install --ignore-missing -y beignet-opencl-icd &>/dev/null
-alias die='EXIT=$? LINE=$LINENO error_exit'
-set -e
-    
+yes | sudo pacman -S xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau libva-utils &>/dev/null
 msg_ok "Set Up Hardware Acceleration"  
 
-msg_info "Setting Up ubdesk user"
-useradd -d /home/ubdesk -m ubdesk &>/dev/null
-gpasswd -a ubdesk audio &>/dev/null
-gpasswd -a ubdesk video &>/dev/null
-gpasswd -a ubdesk render &>/dev/null
+msg_info "Setting Up vdkuser"
+echo "vdkuser ALL=(ALL) NOPASSWD:ALL" | tee -a /etc/sudoers &>/dev/null
+useradd -d /home/vdkuser -m vdkuser &>/dev/null
+gpasswd -a vdkuser audio &>/dev/null
+gpasswd -a vdkuser video &>/dev/null
+gpasswd -a vdkuser render &>/dev/null
 groupadd -r autologin &>/dev/null
-gpasswd -a ubdesk autologin &>/dev/null
-gpasswd -a ubdesk input &>/dev/null #to enable direct access to devices
-msg_ok "Set Up ubdesk user"
+gpasswd -a vdkuser autologin &>/dev/null
+gpasswd -a vdkuser input &>/dev/null #to enable direct access to devices
+msg_ok "Set Up vdkuser user"
 
 msg_info "Installing lightdm"
-DEBIAN_FRONTEND=noninteractive apt-get install -y lightdm &>/dev/null
+yes | pacman -S lightdm &>/dev/null
 echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 msg_ok "Installed lightdm"
+# add greetter login manager lightdm-gtk-greeter
+
+msg_info "Installing lightdm"
+yes | pacman -S xfce4 xfce4-terminal \
+      xfce4-terminal \
+      firefox &>/dev/null
+msg_ok "Installed lightdm"
+
 
 msg_info "Updating xsession"
-cat <<EOF >/usr/share/xsessions/ubdesk-alsa.desktop
+cat <<EOF >/usr/share/xsessions/vdkuser-alsa.desktop
 [Desktop Entry]
-Name=Ubdesk-alsa
-Comment=This session will start Kodi media center with alsa support
-Exec=env AE_SINK=ALSA ubdesk-standalone
-TryExec=env AE_SINK=ALSA ubdesk-standalone
+Name=vdkuser-alsa
+Comment=This session will start xfce with alsa support
+Exec=env AE_SINK=ALSA vdkuser-standalone
+TryExec=env AE_SINK=ALSA vdkuser-standalone
 Type=Application
 EOF
 msg_ok "Updated xsession"
 
 msg_info "Setting up autologin"
-cat <<EOF >/etc/lightdm/lightdm.conf.d/autologin-ubdesk.conf
+cat <<EOF >/etc/lightdm/lightdm.conf.d/autologin-vdkuser.conf
 [Seat:*]
-autologin-user=ubdesk
-autologin-session=ubdesk-alsa
+autologin-user=vdkuser
+autologin-session=vdkuser-alsa
 EOF
 msg_ok "Set up autologin"
 
 msg_info "Setting up device detection for xorg"
-apt-get install -y xserver-xorg-input-evdev &>/dev/null
+yes | pacman -S  xf86-input-evdev  &>/dev/null
 #following script needs to be executed before Xorg starts to enumerate all input devices
 /bin/mkdir -p /etc/X11/xorg.conf.d
 cat >/usr/local/bin/preX-populate-input.sh  << __EOF__
@@ -179,8 +186,7 @@ msg_ok "Customized Container"
   fi
   
 msg_info "Cleaning up"
-apt-get autoremove >/dev/null
-apt-get autoclean >/dev/null
+#clean archlinux
 msg_ok "Cleaned"
 
 msg_info "Starting X up"
