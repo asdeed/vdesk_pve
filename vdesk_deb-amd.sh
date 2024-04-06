@@ -91,7 +91,7 @@ deb-src http://security.debian.org/ bookworm-security non-free non-free-firmware
 deb http://deb.debian.org/debian/ bookworm-updates non-free non-free-firmware
 deb-src http://deb.debian.org/debian/ bookworm-updates non-free non-free-firmware
 EOF
-apt-get update
+apt-get update &>/dev/null
 msg_ok "Sources list updated"
 
 msg_info "Setting Up Hardware Acceleration"  
