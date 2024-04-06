@@ -5,10 +5,10 @@ APP="vdesk"
 var_disk="35"
 var_cpu="4"
 var_ram="4048"
-var_os="archlinux"
-var_version="base"
+var_os="debian"
+var_version="12"
 NSAPP=$(echo ${APP,,} | tr -d ' ')
-var_install="${NSAPP}-install"
+var_install="${NSAPP}_deb-amd"
 NEXTID=$(pvesh get /cluster/nextid)
 INTEGER='^[0-9]+$'
 YW=`echo "\033[33m"`
@@ -93,12 +93,12 @@ function default_settings() {
 		echo -e "${BL}Creating a ${APP} LXC using the above default settings${CL}"
 }
 function advanced_settings() {
-var_version=$(whiptail --title "UBUNTU VERSION" --radiolist "Choose Version" 10 58 3 \
-"20.04" "Focal" OFF \
-"22.04" "Jammy" ON \
+var_version=$(whiptail --title "Debian VERSION" --radiolist "Choose Version" 10 58 3 \
+"11.04" "Bullseye" OFF \
+"12" "Bookworm" ON \
 3>&1 1>&2 2>&3)
 exitstatus=$?
-if [ $exitstatus = 0 ]; then echo -e "${DGN}Using Ubuntu Version: ${BGN}$var_version${CL}"; fi
+if [ $exitstatus = 0 ]; then echo -e "${DGN}Using Debian Version: ${BGN}$var_version${CL}"; fi
 CT_TYPE=$(whiptail --title "CONTAINER TYPE" --radiolist --cancel-button Exit-Script "Choose Type" 8 58 2 \
 "1" "Unprivileged" ON \
 "0" "Privileged" OFF \

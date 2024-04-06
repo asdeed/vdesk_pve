@@ -47,76 +47,81 @@ function msg_error() {
 msg_info "Setting up Container OS "
 sed -i "/$LANG/ s/\(^# \)//" /etc/locale.gen
 locale-gen >/dev/null
-# TODO Rebuild network detection
-#while [ "$(hostname -I)" = "" ]; do
-#  1>&2 echo -en "${CROSS}${RD} No Network! "
-#  sleep $RETRY_EVERY
-#  ((NUM--))
-#  if [ $NUM -eq 0 ]
-#  then
-#    1>&2 echo -e "${CROSS}${RD} No Network After $RETRY_NUM Tries${CL}"    
-#    exit 1
-#  fi
-#done
+while [ "$(hostname -I)" = "" ]; do
+  1>&2 echo -en "${CROSS}${RD} No Network! "
+  sleep $RETRY_EVERY
+  ((NUM--))
+  if [ $NUM -eq 0 ]
+  then
+    1>&2 echo -e "${CROSS}${RD} No Network After $RETRY_NUM Tries${CL}"    
+    exit 1
+  fi
+done
 msg_ok "Set up Container OS"
-#msg_ok "Network Connected: ${BL}$(hostname -I)"
+msg_ok "Network Connected: ${BL}$(hostname -I)"
 
-#if nc -zw1 8.8.8.8 443; then  msg_ok "Internet Connected"; else  msg_error "Internet NOT Connected"; exit 1; fi;
-#RESOLVEDIP=$(nslookup "github.com" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)
-#if [[ -z "$RESOLVEDIP" ]]; then msg_error "DNS Lookup Failure";  else msg_ok "DNS Resolved github.com to $RESOLVEDIP";  fi;
+if nc -zw1 8.8.8.8 443; then  msg_ok "Internet Connected"; else  msg_error "Internet NOT Connected"; exit 1; fi;
+RESOLVEDIP=$(nslookup "github.com" | awk -F':' '/^Address: / { matched = 1 } matched { print $2}' | xargs)
+if [[ -z "$RESOLVEDIP" ]]; then msg_error "DNS Lookup Failure";  else msg_ok "DNS Resolved github.com to $RESOLVEDIP";  fi;
 
 msg_info "Updating Container OS"
-pacman-key --init && pacman-key --populate archlinux &>/dev/null
-yes | pacman -Sy archlinux-keyring && yes | pacman -Suy &>/dev/null
+apt-get update &>/dev/null
+apt-get -y upgrade &>/dev/null
 msg_ok "Updated Container OS"
 
-msg_info "Updating multilib repo"
-cat << EOF | tee -a /etc/pacman.conf
-[multilib]
-Include = /etc/pacman.d/mirrorlist
-EOF
-msg_info "Updated multilib repo"
-
 msg_info "Installing Dependencies"
-yes | pacman -Syu &>/dev/null
-yes | pacman -S git vim nvtop htop &>/dev/null
+apt-get install -y curl \
+    nvtop \
+    htop \
+    sudo \
+    vim \
+    net-tools \
+    screen \
+    tree \
+    gnupg &>/dev/null
 msg_ok "Installed Dependencies"
 
 msg_info "Setting Up Hardware Acceleration"  
-yes | sudo pacman -S xf86-video-amdgpu vulkan-radeon lib32-vulkan-radeon libva-mesa-driver lib32-libva-mesa-driver mesa-vdpau lib32-mesa-vdpau libva-utils &>/dev/null
+apt-get -y install \
+    xserver-xorg-video-amdgpu \
+    firmware-amd-graphics \
+    libgl1-mesa-dri \
+    libglx-mesa0 \
+    mesa-vulkan-drivers \
+    xserver-xorg-video-all \
+    ocl-icd-libopencl1 &>/dev/null 
+set +e
+alias die=''
+apt-get install --ignore-missing -y beignet-opencl-icd &>/dev/null
+alias die='EXIT=$? LINE=$LINENO error_exit'
+set -e
+    
 msg_ok "Set Up Hardware Acceleration"  
 
-msg_info "Setting Up vdkuser"
-echo "vdkuser ALL=(ALL) NOPASSWD:ALL" | tee -a /etc/sudoers &>/dev/null
-useradd -d /home/vdkuser -m vdkuser &>/dev/null
+msg_info "Setting Up vdkuser debian user"
+useradd -d /home/vdkuser -m vdkuser &>/dev/null #TODO set password
 gpasswd -a vdkuser audio &>/dev/null
 gpasswd -a vdkuser video &>/dev/null
 gpasswd -a vdkuser render &>/dev/null
 groupadd -r autologin &>/dev/null
 gpasswd -a vdkuser autologin &>/dev/null
-gpasswd -a vdkuser input &>/dev/null #to enable direct access to devices
+gpasswd -a vdkuser input &>/dev/null 
+echo "vdkuser ALL=(ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
 msg_ok "Set Up vdkuser user"
 
-msg_info "Installing lightdm"
-yes | pacman -S lightdm &>/dev/null
+msg_info "Installing Xfce4 with lightdm"
+DEBIAN_FRONTEND=noninteractive apt-get install -y xfce-desktop \
+    lightdm -y &>/dev/null
 echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 msg_ok "Installed lightdm"
-# add greetter login manager lightdm-gtk-greeter
-
-msg_info "Installing lightdm"
-yes | pacman -S xfce4 xfce4-terminal \
-      xfce4-terminal \
-      firefox &>/dev/null
-msg_ok "Installed lightdm"
-
 
 msg_info "Updating xsession"
-cat <<EOF >/usr/share/xsessions/vdkuser-alsa.desktop
+cat <<EOF >/usr/share/xsessions/vdesk-alsa.desktop
 [Desktop Entry]
-Name=vdkuser-alsa
-Comment=This session will start xfce with alsa support
-Exec=env AE_SINK=ALSA vdkuser-standalone
-TryExec=env AE_SINK=ALSA vdkuser-standalone
+Name=vdesk-alsa
+Comment=This session will start vdesk with alsa support
+Exec=env AE_SINK=ALSA vdesk-standalone
+TryExec=env AE_SINK=ALSA vdesk-standalone
 Type=Application
 EOF
 msg_ok "Updated xsession"
@@ -125,12 +130,12 @@ msg_info "Setting up autologin"
 cat <<EOF >/etc/lightdm/lightdm.conf.d/autologin-vdkuser.conf
 [Seat:*]
 autologin-user=vdkuser
-autologin-session=vdkuser-alsa
+autologin-session=vdesk-alsa
 EOF
 msg_ok "Set up autologin"
 
 msg_info "Setting up device detection for xorg"
-yes | pacman -S  xf86-input-evdev  &>/dev/null
+apt-get install -y xserver-xorg-input-evdev &>/dev/null
 #following script needs to be executed before Xorg starts to enumerate all input devices
 /bin/mkdir -p /etc/X11/xorg.conf.d
 cat >/usr/local/bin/preX-populate-input.sh  << __EOF__
@@ -187,7 +192,8 @@ msg_ok "Customized Container"
   fi
   
 msg_info "Cleaning up"
-#clean archlinux
+apt-get autoremove >/dev/null
+apt-get autoclean >/dev/null
 msg_ok "Cleaned"
 
 msg_info "Starting X up"
