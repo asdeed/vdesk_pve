@@ -70,6 +70,8 @@ apt-get -y upgrade &>/dev/null
 msg_ok "Updated Container OS"
 
 msg_info "Installing Dependencies"
+dpkg --add-architecture i386 &>/dev/null
+apt update &>/dev/null
 apt-get install -y curl \
     nvtop \
     htop \
@@ -78,6 +80,10 @@ apt-get install -y curl \
     net-tools \
     screen \
     tree \
+    software-properties-common \
+    apt-transport-https \
+    dirmngr \
+    ca-certificates \
     gnupg &>/dev/null
 msg_ok "Installed Dependencies"
 
@@ -95,7 +101,7 @@ apt-get update &>/dev/null
 msg_ok "Sources list updated"
 
 msg_info "Setting Up Hardware Acceleration"  
-apt-get -y install \
+DEBIAN_FRONTEND=noninteractive apt-get -y install \
     xserver-xorg-video-amdgpu \
     firmware-amd-graphics \
     libgl1-mesa-dri \
@@ -113,12 +119,17 @@ gpasswd -a vdkuser render &>/dev/null
 groupadd -r autologin &>/dev/null
 gpasswd -a vdkuser autologin &>/dev/null
 gpasswd -a vdkuser input &>/dev/null 
-echo "vdkuser ALL=(ALL) NOPASSWD:ALL" | tee -a /etc/sudoers
+echo "vdkuser ALL=(ALL) NOPASSWD:ALL" | tee -a /etc/sudoers  &>/dev/null
 msg_ok "Set Up vdkuser user"
 
 msg_info "Installing Xfce4 with lightdm"
-DEBIAN_FRONTEND=noninteractive apt-get install -y xfce-desktop \
-    lightdm -y &>/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install -y xfce4 \
+    lightdm \
+    firefox-esr \
+    xfce4-terminal \
+    hardinfo \
+    alsa-utils \
+    dbus-x11 -y &>/dev/null
 echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 msg_ok "Installed lightdm"
 
@@ -134,6 +145,7 @@ EOF
 msg_ok "Updated xsession"
 
 msg_info "Setting up autologin"
+/usr/bin/mkdir -p /etc/lightdm/lightdm.conf.d
 cat <<EOF >/etc/lightdm/lightdm.conf.d/autologin-vdkuser.conf
 [Seat:*]
 autologin-user=vdkuser

@@ -230,6 +230,7 @@ export PCT_OPTIONS="
   -onboot 1
   -cores $CORE_COUNT
   -memory $RAM_SIZE
+  -swap $RAM_SIZE
   -unprivileged $CT_TYPE
   $PW
 "
