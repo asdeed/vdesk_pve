@@ -81,6 +81,19 @@ apt-get install -y curl \
     gnupg &>/dev/null
 msg_ok "Installed Dependencies"
 
+msg_info "Updating sources list"
+touch /etc/apt/sources.list.d/non-free-contrib.list
+cat << EOF | tee -a /etc/apt/sources.list.d/non-free-contrib.list
+deb http://deb.debian.org/debian/ bookworm non-free non-free-firmware
+deb-src http://deb.debian.org/debian/ bookworm non-free non-free-firmware
+deb http://security.debian.org/ bookworm-security non-free non-free-firmware
+deb-src http://security.debian.org/ bookworm-security non-free non-free-firmware
+deb http://deb.debian.org/debian/ bookworm-updates non-free non-free-firmware
+deb-src http://deb.debian.org/debian/ bookworm-updates non-free non-free-firmware
+EOF
+apt-get update
+msg_ok "Sources list updated"
+
 msg_info "Setting Up Hardware Acceleration"  
 apt-get -y install \
     xserver-xorg-video-amdgpu \
@@ -89,13 +102,7 @@ apt-get -y install \
     libglx-mesa0 \
     mesa-vulkan-drivers \
     xserver-xorg-video-all \
-    ocl-icd-libopencl1 &>/dev/null 
-set +e
-alias die=''
-apt-get install --ignore-missing -y beignet-opencl-icd &>/dev/null
-alias die='EXIT=$? LINE=$LINENO error_exit'
-set -e
-    
+    ocl-icd-libopencl1 &>/dev/null     
 msg_ok "Set Up Hardware Acceleration"  
 
 msg_info "Setting Up vdkuser debian user"
