@@ -84,6 +84,7 @@ apt-get install -y curl \
     apt-transport-https \
     dirmngr \
     ca-certificates \
+    vainfo \
     gnupg &>/dev/null
 msg_ok "Installed Dependencies"
 
