@@ -134,23 +134,23 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y xfce4 \
 echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 msg_ok "Installed lightdm"
 
-msg_info "Updating xsession"
-cat <<EOF >/usr/share/xsessions/vdesk-alsa.desktop
-[Desktop Entry]
-Name=vdesk-alsa
-Comment=This session will start vdesk with alsa support
-Exec=env AE_SINK=ALSA vdesk-standalone
-TryExec=env AE_SINK=ALSA vdesk-standalone
-Type=Application
-EOF
-msg_ok "Updated xsession"
+#msg_info "Updating xsession"
+#cat <<EOF >/usr/share/xsessions/vdesk-alsa.desktop
+#[Desktop Entry]
+#Name=vdesk-alsa
+#Comment=This session will start vdesk with alsa support
+#Exec=env AE_SINK=ALSA vdesk-standalone
+#TryExec=env AE_SINK=ALSA vdesk-standalone
+#Type=Application
+#EOF
+#msg_ok "Updated xsession"
 
 msg_info "Setting up autologin"
 /usr/bin/mkdir -p /etc/lightdm/lightdm.conf.d
 cat <<EOF >/etc/lightdm/lightdm.conf.d/autologin-vdkuser.conf
 [Seat:*]
 autologin-user=vdkuser
-autologin-session=vdesk-alsa
+#autologin-session=vdesk-alsa
 EOF
 msg_ok "Set up autologin"
 
@@ -193,6 +193,25 @@ SupplementaryGroups=video render input audio tty
 __EOF__
 systemctl daemon-reload
 msg_ok "Set up device detection for xorg"
+
+msg_info "Setting up sunshine"
+wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.0/sunshine-debian-bookworm-amd64.deb
+sudo apt install -f ./sunshine-debian-bookworm-amd64.deb
+echo 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"' | tee /etc/udev/rules.d/60-sunshine.rules
+udevadm control --reload-rules
+udevadm trigger
+#modprobe uinput
+
+/bin/mkdir -p /home/vdkuser/.config/autostart/
+cat << EOF | tee -a /home/vdkuser/.config/autostart/sun.desktop
+[Desktop Entry]
+Type=Application
+Name=sunshine
+Exec=/usr/bin/sunshine
+StartupNotify=false
+Terminal=false
+EOF
+msg_ok "Sunshine configured"
 
 PASS=$(grep -w "root" /etc/shadow | cut -b6);
   if [[ $PASS != $ ]]; then
