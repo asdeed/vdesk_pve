@@ -202,15 +202,15 @@ wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.0/sunshine-d
 #udevadm trigger &>/dev/null
 #modprobe uinput
 
-/bin/mkdir -p /home/vdkuser/.config/autostart/ 
-cat << EOF | tee -a /home/vdkuser/.config/autostart/sun.desktop
-[Desktop Entry]
-Type=Application
-Name=sunshine
-Exec=/usr/bin/sunshine
-StartupNotify=false
-Terminal=false
-EOF
+#/bin/mkdir -p /home/vdkuser/.config/autostart/ 
+#cat << EOF | tee -a /home/vdkuser/.config/autostart/sun.desktop
+#[Desktop Entry]
+#Type=Application
+#Name=sunshine
+#Exec=/usr/bin/sunshine
+#StartupNotify=false
+#Terminal=false
+#EOF
 msg_ok "Sunshine configured"
 
 PASS=$(grep -w "root" /etc/shadow | cut -b6);
