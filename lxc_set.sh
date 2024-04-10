@@ -266,6 +266,7 @@ lxc.cgroup2.devices.allow: c 13:* rwm
 lxc.mount.entry: /dev/input dev/input none bind,optional,create=dir
 lxc.cgroup2.devices.allow: c 116:* rwm
 lxc.mount.entry: /dev/snd dev/snd none bind,optional,create=dir
+lxc.mount.auto = proc:rw sys:rw cgroup:rw:force
 EOF
 if [ "$CT_TYPE" == "1" ]; then
     cat <<EOF >> $LXC_CONFIG
