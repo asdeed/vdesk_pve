@@ -213,16 +213,16 @@ systemctl restart $(basename $(dirname $GETTY_OVERRIDE) | sed 's/\.d//')
 msg_ok "Customized Container"
   fi
 
-# TODO: rebuild autodetect sound card 
+msg_info "Setting up pulseaudio"
 sound_card=""
 for card_num in $(aplay -L | grep -oE '(surround[0-9]+|front|hdmi|hw|dmix|audio|usbstream|sysdefault|iec958|plughw):CARD=[^ ]*')
 do
-    if speaker-test -D hw:$card_num -c 2 -t sine > /dev/null 2>&1; then
+    if speaker-test -D $card_num -c 2 -l 1 > /dev/null 2>&1; then
         sound_card=$card_num
         break
     fi
 done
-# Check if sound card was detected
+
 if [ -n "$sound_card" ]; then
     msg_info "Setting up pulseaudio for sound card $sound_card"
     echo "load-module module-alsa-sink device=$sound_card" >> /etc/pulse/default.pa
@@ -239,28 +239,15 @@ EOF
 else
     msg_error "Failed to detect a functional sound card. Pulseaudio configuration not set."
 fi
-
-
-msg_info "Setting up pulseaudio"
-echo "load-module module-alsa-sink device=hdmi:CARD=HDMI" >> /etc/pulse/default.pa
-/bin/mkdir -p /home/vdkuser/.config/autostart/ 
-cat << EOF | tee -a /home/vdkuser/.config/autostart/pulse.desktop
-[Desktop Entry]
-Type=Application
-Name=pulseaudio
-Exec=/usr/bin/pulseaudio
-StartupNotify=false
-Terminal=false
-EOF
 msg_ok "Pulseaudio configured"
 
 msg_info "Setting up sunshine"
-wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.0/sunshine-debian-bookworm-amd64.deb 
+wget https://raw.githubusercontent.com/asdeed/vdesk_pve/main/pkg/sunshine-debian-bookworm-amd64.deb &>/dev/null
 sudo apt install -f ./sunshine-debian-bookworm-amd64.deb -y
 echo 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"' | tee /etc/udev/rules.d/60-sunshine.rules &>/dev/null
-udevadm control --reload-rules 
-udevadm trigger 
-modprobe uinput
+udevadm control --reload-rules &>/dev/null
+udevadm trigger &>/dev/null
+#modprobe uinput
 
 cat << EOF | tee -a /home/vdkuser/.config/autostart/sun.desktop
 [Desktop Entry]
