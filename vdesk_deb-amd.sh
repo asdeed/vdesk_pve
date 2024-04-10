@@ -91,7 +91,7 @@ msg_ok "Installed Dependencies"
 msg_info "Updating sources list"
 touch /etc/apt/sources.list.d/non-free-contrib.list
 cat << EOF | tee -a /etc/apt/sources.list.d/non-free-contrib.list
-deb http://deb.debian.org/debian/ bookworm non-free non-free-firmware
+deb http://deb.debian.org/debian/ bookworm non-free non-free-firmware 
 deb-src http://deb.debian.org/debian/ bookworm non-free non-free-firmware
 deb http://security.debian.org/ bookworm-security non-free non-free-firmware
 deb-src http://security.debian.org/ bookworm-security non-free non-free-firmware
@@ -246,7 +246,7 @@ wget https://raw.githubusercontent.com/asdeed/vdesk_pve/main/pkg/sunshine-debian
 sudo apt install -f ./sunshine-debian-bookworm-amd64.deb -y
 echo 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"' | tee /etc/udev/rules.d/60-sunshine.rules &>/dev/null
 udevadm control --reload-rules &>/dev/null
-udevadm trigger &>/dev/null
+#udevadm trigger &>/dev/null
 #modprobe uinput
 
 cat << EOF | tee -a /home/vdkuser/.config/autostart/sun.desktop

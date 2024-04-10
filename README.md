@@ -20,14 +20,18 @@ bash -c "$(wget -qLO - https://raw.githubusercontent.com/asdeed/vdesk_pve/main/l
 
 at the end of installation your container should be attached to TTY7 console.
 
-### Troubleshoot: incorect path for graphic device
+## Troubleshoot
+If you encounter problems during configuration, a set of debugging scripts is available
+
+### Incorect path for graphic device
+
 
 ```bash
 ls -la /dev/dri/by-path/
 ls -la /sys/class/graphics/
 ```
 
-### Troubleshoot: incorect path for soud devices
+### Incorect path for soud devices
 
 ```bash
 ls -la /dev/snd/by-path/
