@@ -134,23 +134,25 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y xfce4 \
 echo "/usr/sbin/lightdm" > /etc/X11/default-display-manager
 msg_ok "Installed Xfce4/lightdm"
 
-msg_info "Updating xsession"
-cat <<EOF >/usr/share/xsessions/vdesk-alsa.desktop
-[Desktop Entry]
-Name=vdesk-alsa
-Comment=This session will start vdesk with alsa support
-Exec=env AE_SINK=ALSA vdesk-standalone
-TryExec=env AE_SINK=ALSA vdesk-standalone
-Type=Application
-EOF
-msg_ok "Updated xsession"
+#msg_info "Updating xsession"
+#cat <<EOF >/usr/share/xsessions/vdesk-alsa.desktop
+#[Desktop Entry]
+#Name=vdesk-alsa
+#Comment=This session will start vdesk with alsa support
+#Exec=env AE_SINK=ALSA vdesk-standalone
+#TryExec=env AE_SINK=ALSA vdesk-standalone
+#Type=Application
+#EOF
+#msg_ok "Updated xsession"
 
 msg_info "Setting up autologin"
 /usr/bin/mkdir -p /etc/lightdm/lightdm.conf.d
 cat <<EOF >/etc/lightdm/lightdm.conf.d/autologin-vdkuser.conf
 [Seat:*]
 autologin-user=vdkuser
-autologin-session=vdesk-alsa
+#autologin-session=vdesk-alsa
+autologin-session=xfce
+autologin-user-timeout=0
 EOF
 msg_ok "Set up autologin"
 
@@ -194,25 +196,6 @@ __EOF__
 systemctl daemon-reload
 msg_ok "Set up device detection for xorg"
 
-msg_info "Setting up sunshine"
-wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.0/sunshine-debian-bookworm-amd64.deb -P /home/vdkuser &>/dev/null
-#sudo apt install -f ./sunshine-debian-bookworm-amd64.deb -y &>/dev/null
-#echo 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"' | tee /etc/udev/rules.d/60-sunshine.rules &>/dev/null
-#udevadm control --reload-rules &>/dev/null
-#udevadm trigger &>/dev/null
-#modprobe uinput
-
-#/bin/mkdir -p /home/vdkuser/.config/autostart/ 
-#cat << EOF | tee -a /home/vdkuser/.config/autostart/sun.desktop
-#[Desktop Entry]
-#Type=Application
-#Name=sunshine
-#Exec=/usr/bin/sunshine
-#StartupNotify=false
-#Terminal=false
-#EOF
-msg_ok "Sunshine configured"
-
 PASS=$(grep -w "root" /etc/shadow | cut -b6);
   if [[ $PASS != $ ]]; then
 msg_info "Customizing Container"
@@ -229,7 +212,40 @@ systemctl daemon-reload
 systemctl restart $(basename $(dirname $GETTY_OVERRIDE) | sed 's/\.d//')
 msg_ok "Customized Container"
   fi
-  
+
+# TODO: rebuild autodetect sound card 
+msg_info "Setting up pulseaudio"
+echo "load-module module-alsa-sink device=hdmi:CARD=HDMI" >> /etc/pulse/default.pa
+/bin/mkdir -p /home/vdkuser/.config/autostart/ 
+cat << EOF | tee -a /home/vdkuser/.config/autostart/pulse.desktop
+[Desktop Entry]
+Type=Application
+Name=pulseaudio
+Exec=/usr/bin/pulseaudio
+StartupNotify=false
+Terminal=false
+EOF
+msg_ok "Pulseaudio configured"
+
+msg_info "Setting up sunshine"
+wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.0/sunshine-debian-bookworm-amd64.deb -P /home/vdkuser &>/dev/null
+sudo apt install -f ./sunshine-debian-bookworm-amd64.deb -y &>/dev/null
+echo 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"' | tee /etc/udev/rules.d/60-sunshine.rules &>/dev/null
+udevadm control --reload-rules 
+udevadm trigger 
+modprobe uinput
+
+cat << EOF | tee -a /home/vdkuser/.config/autostart/sun.desktop
+[Desktop Entry]
+Type=Application
+Name=sunshine
+Exec=/usr/bin/sunshine
+StartupNotify=false
+Terminal=false
+EOF
+/bin/chown vdkuser:vdkuser -R /home/vdkuser/.config/autostart/*
+msg_ok "Sunshine configured"
+
 msg_info "Cleaning up"
 apt-get autoremove >/dev/null
 apt-get autoclean >/dev/null
@@ -239,6 +255,3 @@ msg_info "Starting X up"
 systemctl start lightdm
 ln -fs /lib/systemd/system/lightdm.service /etc/systemd/system/display-manager.service
 msg_info "Started X"
-
-
-

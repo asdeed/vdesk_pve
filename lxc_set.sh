@@ -44,7 +44,7 @@ else
     exit
 fi
 function header_info {
-echo -e "kodi---------\n\n"
+echo -e "VDesk---------\n\n"
 }
 function msg_info() {
     local msg="$1"
