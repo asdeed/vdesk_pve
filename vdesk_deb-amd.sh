@@ -228,7 +228,7 @@ EOF
 msg_ok "Pulseaudio configured"
 
 msg_info "Setting up sunshine"
-wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.0/sunshine-debian-bookworm-amd64.deb -P /home/vdkuser &>/dev/null
+wget https://github.com/LizardByte/Sunshine/releases/download/v0.23.0/sunshine-debian-bookworm-amd64.deb &>/dev/null
 sudo apt install -f ./sunshine-debian-bookworm-amd64.deb -y &>/dev/null
 echo 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"' | tee /etc/udev/rules.d/60-sunshine.rules &>/dev/null
 udevadm control --reload-rules 
