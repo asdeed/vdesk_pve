@@ -252,9 +252,9 @@ msg_ok "Stopped LXC Container"
 
 LXC_CONFIG=/etc/pve/lxc/${CTID}.conf
 cat <<EOF >> $LXC_CONFIG
-lxc.cgroup2.devices.allow: c 226:1 rwm
+lxc.cgroup2.devices.allow: c 226:2 rwm
 lxc.cgroup2.devices.allow: c 226:128 rwm
-lxc.mount.entry: /dev/dri/card1 dev/dri/card1 none bind,optional,create=file
+lxc.mount.entry: /dev/dri/card2 dev/dri/card2 none bind,optional,create=file
 lxc.mount.entry: /dev/dri/renderD128 dev/dri/renderD128 none bind,optional,create=file
 lxc.cgroup2.devices.allow: c 29:1 rwm
 lxc.mount.entry: /dev/fb1 dev/fb1 none bind,optional,create=file
